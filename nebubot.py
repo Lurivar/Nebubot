@@ -180,7 +180,7 @@ async def new_rdv(*args):
     e = Event(d, "No description was given to this event.")
     num_lines = sum(1 for line in open('dates'))
     with open('dates', 'a') as file:
-        file.write(str(num_lines) + " : " + e.str + ' *' + e.desc + '*\n')
+        file.write(str(num_lines) + ": " + e.str + ' *' + e.desc + '*\n')
     await bot.say("New Rendezvous is set at : " + e.str + "\n \"" + e.desc + "\"")
     file.close()
 
@@ -209,7 +209,7 @@ async def del_rdv(*args):
           newline = line
           linetuple = newline.partition(":")
           f.write(str(num_line_w))
-          f.write(" : ")
+          f.write(":")
           f.write(linetuple[2])
           num_line_w = num_line_w + 1
       num_line = num_line + 1
