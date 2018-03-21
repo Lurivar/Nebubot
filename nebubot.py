@@ -193,8 +193,12 @@ async def check_rdv():
 @bot.command()
 async def del_rdv(*args):
     line_nbr = int(args[0])
-    await bot.say("Deleting Rendezvous number " + args[0] + "\n\n...\n")
+    await bot.say("Deleting Rendezvous number " + args[0] + "\n...\n")
+    if line_nbr >= sum(1 for line in open('dates')):
+        await bot.say("There is no Rendezvous with this ID. Use /check_rdv to see the list of Rendezvous and their ID\n")
+        return
     num_line = 0
+    num_line_w = 0
     f = open("dates","r")
     rewrite = f.readlines()
     f.close()
@@ -202,11 +206,16 @@ async def del_rdv(*args):
 
     for line in rewrite:
       if line_nbr != num_line:
-        f.write(line)
+          newline = line
+          linetuple = newline.partition(":")
+          f.write(str(num_line_w))
+          f.write(" : ")
+          f.write(linetuple[2])
+          num_line_w = num_line_w + 1
       num_line = num_line + 1
 
     f.close()
-    await bot.say("\nDone !\n")
+    await bot.say("Done !\n")
 
 
 @bot.command()
