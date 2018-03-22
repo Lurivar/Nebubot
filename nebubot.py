@@ -5,6 +5,8 @@ from discord.ext import commands
 import asyncio
 import datetime
 import configparser
+import csv
+import os
 
 #doc api discord http://discordpy.readthedocs.io/en/latest/api.html
 
@@ -173,58 +175,78 @@ async def on_ready():
 #            await bot.send_message(message.channel, printline)
 #            print(printline)
 
+#@bot.command()
+#async def new_rdv(*args):
+#    #i = -1
+#    d = datetime.datetime.strptime(' '.join(args), '%H:%M %d/%m/%Y')
+#    e = Event(d, "No description was given to this event.")
+#    num_lines = sum(1 for line in open('dates'))
+#    with open('dates', 'a') as file:
+#        file.write(str(num_lines) + ": " + e.str + ' *' + e.desc + '*\n')
+#    await bot.say("New Rendezvous is set at : " + e.str + "\n \"" + e.desc + "\"")
+#    file.close()
+
 @bot.command()
 async def new_rdv(*args):
-    #i = -1
-    d = datetime.datetime.strptime(' '.join(args), '%H:%M %d/%m/%Y')
-    e = Event(d, "No description was given to this event.")
-    num_lines = sum(1 for line in open('dates'))
-    with open('dates', 'a') as file:
-        file.write(str(num_lines) + ": " + e.str + ' *' + e.desc + '*\n')
-    await bot.say("New Rendezvous is set at : " + e.str + "\n \"" + e.desc + "\"")
-    file.close()
+    seq = (args[0], args[1])
+    line_count = sum(1 for line in open('dates.csv'))
+    try:
+        d = (datetime.datetime.strptime(' '.join(seq), '%H:%M %d/%m/%Y'))
+        with open('dates.csv', 'a', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile)
+            if len(args)>2:
+                spamwriter.writerow([str(line_count)] + [d.strftime("%Hh%M %d/%m/%Y")] + [args[2]])
+            else:
+                spamwriter.writerow([str(line_count)] + [d.strftime("%Hh%M %d/%m/%Y")] + ["No description was given for this Rendezvous"])
+        csvfile.close()
+    except ValueError:
+        await bot.say("Error: The date format you entered is invalid\n")
 
 @bot.command()
 async def check_rdv():
-    with open('dates', 'r') as liste_rdv:
-        await bot.say(liste_rdv.read())
+    with open('dates.csv', 'r') as liste_rdv, open('temp.txt', 'a') as tempf:
+        liste_csv = csv.reader(liste_rdv)
+        for row in liste_csv:
+            tempf.write("ID: " + row[0] + " | Date: " + row[1] + " | Description: " + row[2] + "\n")
+    tempf.close()
+    with open('temp.txt', 'r') as tempf:
+        await bot.say(tempf.read())
+    os.remove('temp.txt')
     liste_rdv.close()
 
 @bot.command()
 async def del_rdv(*args):
     line_nbr = int(args[0])
+    max_line = sum(1 for line in open('dates.csv'))
     await bot.say("Deleting Rendezvous number " + args[0] + "\n...\n")
-    if line_nbr >= sum(1 for line in open('dates')):
+    if line_nbr >= max_line:
         await bot.say("There is no Rendezvous with this ID. Use /check_rdv to see the list of Rendezvous and their ID\n")
         return
-    num_line = 0
-    num_line_w = 0
-    f = open("dates","r")
-    rewrite = f.readlines()
-    f.close()
-    f = open("dates","w")
+    with open("dates.csv", "r") as inp, open ("new.csv", "w", newline='') as out:
+        old_csv = csv.reader(inp)
+        new_csv = csv.writer(out)
 
-    for line in rewrite:
-      if line_nbr != num_line:
-          newline = line
-          linetuple = newline.partition(":")
-          f.write(str(num_line_w))
-          f.write(":")
-          f.write(linetuple[2])
-          num_line_w = num_line_w + 1
-      num_line = num_line + 1
-
-    f.close()
+        line_list = list(old_csv)
+        del line_list[line_nbr]
+        x = 0
+        while x < (max_line - 1):
+            line_list[x][0] = str(x)
+            x = x + 1
+        new_csv.writerows(line_list)
+    os.remove('dates.csv')
+    os.rename('new.csv' ,'dates.csv')
+    inp.close()
+    out.close()
     await bot.say("Done !\n")
 
 
 @bot.command()
 async def help_rdv():
     await bot.say("Usage :\n"
-    "To add a new Rendezvous            : /new_rdv H:M d/m/Y\n"
-    "To delete a Rendezvous             : /del_rdv ID\n"
-    "To check the list of Rendezvous    : /check_rdv\n"
-    "To see this list of commands       : /help_rdv")
+    "To add a new Rendezvous: /new_rdv H:M d/m/Y\n \"Description of the event\""
+    "To delete a Rendezvous: /del_rdv ID\n"
+    "To check the list of Rendezvous: /check_rdv\n"
+    "To see this list of commands: /help_rdv")
 
 
 bot.loop.create_task(check_event())
