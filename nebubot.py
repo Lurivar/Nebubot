@@ -11,7 +11,7 @@ import os
 #doc api discord http://discordpy.readthedocs.io/en/latest/api.html
 
 
-bot = commands.Bot(command_prefix='/', description='h')
+bot = commands.Bot(command_prefix='.', description='h')
 
 #on pars le fichier config pour recup les infos que l'on a besoin pour se connecter
 config = configparser.ConfigParser()
@@ -198,6 +198,7 @@ async def new_rdv(*args):
                 spamwriter.writerow([str(line_count)] + [d.strftime("%Hh%M %d/%m/%Y")] + [args[2]])
             else:
                 spamwriter.writerow([str(line_count)] + [d.strftime("%Hh%M %d/%m/%Y")] + ["No description was given for this Rendezvous"])
+        await bot.say("The new Rendezvous was correctly added to the list.\n")
         csvfile.close()
     except ValueError:
         await bot.say("Error: The date format you entered is invalid\n")
@@ -239,14 +240,32 @@ async def del_rdv(*args):
     out.close()
     await bot.say("Done !\n")
 
+@bot.command()
+async def time():
+    k = 0
+    Paris = datetime.datetime.now()
+    Tomsk = Paris + datetime.timedelta(hours=6)
+    Xian = Paris + datetime.timedelta(hours=7)
+    Incheon = Paris + datetime.timedelta(hours=8)
+    tab = [Paris, Tomsk, Xian, Incheon]
+    tab2 = ["Paris", "Tomsk", "Xian", "Incheon"]
+    
+    while (k <= 3):
+        if (tab2[k] == "Paris"):
+            tmp = tab[k].strftime("Paris / Bruxelles / Hot / Stockholm:  %Hh %Mm %Ss")
+        else:
+            tmp = tab[k].strftime(tab2[k] + ": %Hh %Mm %Ss")
+        k += 1
+        await bot.say(tmp)
 
 @bot.command()
 async def help_rdv():
     await bot.say("Usage :\n"
-    "To add a new Rendezvous: /new_rdv H:M d/m/Y\n \"Description of the event\""
-    "To delete a Rendezvous: /del_rdv ID\n"
-    "To check the list of Rendezvous: /check_rdv\n"
-    "To see this list of commands: /help_rdv")
+    "To add a new Rendezvous: .new_rdv H:M d/m/Y\n \"Description of the event\""
+    "To delete a Rendezvous: .del_rdv ID\n"
+    "To check the list of Rendezvous: .check_rdv\n"
+    "To see this list of commands: .help_rdv\n"
+    "To see the different timezones of each member: .time\n")
 
 
 bot.loop.create_task(check_event())
