@@ -264,7 +264,7 @@ async def time():
         k += 1
         await bot.say(tmp)
 
-@bot.command()
+@bot.command(aliases=['h', 'help', 'commands', 'man', 'info'])
 async def help_rdv():
     await bot.say("Usage :\n"
     "To add a new Rendezvous: .new_rdv H:M d/m/Y \"Description of the event\"\n"
