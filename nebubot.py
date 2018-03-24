@@ -9,7 +9,7 @@ import csv
 import os
 
 #doc api discord http://discordpy.readthedocs.io/en/latest/api.html
-
+#doc discord.py https://discordpy.readthedocs.io/en/rewrite/index.html
 
 bot = commands.Bot(command_prefix='.', description='h')
 
@@ -32,21 +32,19 @@ class Event(object):
 
 async def check_event():
     await bot.wait_until_ready()
-    channel = discord.Object(general_channel_id)
     today = datetime.datetime.today()
     margin = datetime.timedelta(days = 3)
     event_tab = []
-    for line in open('dates'):
-        data = line.split("###")
-        date = datetime.datetime.strptime(data[0], '%H:%M %d/%m/%Y')
-        desc = data[1].rstrip('\n')
+    for row in csv.reader(open('dates.csv', 'r')):
+        date = datetime.datetime.strptime(row[1], '%Hh%M %d/%m/%Y')
+        desc = row[2]
         obj = Event(date, desc)
         if (today <= obj.dt <= today + margin):
             event_tab.append(obj)
     while not bot.is_closed:
         for item in event_tab:
-            await bot.send_message(channel, "You have a rendezvous planned at : " + item.str + "\n \"" + item.desc + "\"")
-        await bot.send_message(channel, "@everyone, look at this reminder !")
+            await bot.send_message(discord.Object(id=general_channel_id), "@everyone, look at this reminder !"
+								   "You have a rendezvous planned at : " + item.str + "\n *" + item.desc + "*")
         await asyncio.sleep(86400) # task will run every day - 86400 sec
 
 #toDoDB = []
@@ -108,6 +106,10 @@ async def on_ready():
     print(bot.user.name)
     print(bot.user.id)
     print('------')
+
+@bot.command()
+async def ping(*args):
+	await bot.say(":ping_pong: Pong!")
 
 #@bot.event
 
@@ -186,7 +188,7 @@ async def on_ready():
 #    await bot.say("New Rendezvous is set at : " + e.str + "\n \"" + e.desc + "\"")
 #    file.close()
 
-@bot.command()
+@bot.command(aliases=['add_rdv'])
 async def new_rdv(*args):
     seq = (args[0], args[1])
     line_count = sum(1 for line in open('dates.csv'))
@@ -203,7 +205,11 @@ async def new_rdv(*args):
     except ValueError:
         await bot.say("Error: The date format you entered is invalid\n")
 
-@bot.command()
+@bot.command(aliases=['modify_rdv'])
+async def mod_rdv():
+	await bot.say("lol")
+
+@bot.command(aliases=['list_rdv', 'all_rdv', 'see_rdv', 'look_rdv'])
 async def check_rdv():
     with open('dates.csv', 'r') as liste_rdv, open('temp.txt', 'a') as tempf:
         liste_csv = csv.reader(liste_rdv)
@@ -215,7 +221,7 @@ async def check_rdv():
     os.remove('temp.txt')
     liste_rdv.close()
 
-@bot.command()
+@bot.command(aliases=['delete_rdv', 'remove_rdv'])
 async def del_rdv(*args):
     line_nbr = int(args[0])
     max_line = sum(1 for line in open('dates.csv'))
@@ -261,8 +267,9 @@ async def time():
 @bot.command()
 async def help_rdv():
     await bot.say("Usage :\n"
-    "To add a new Rendezvous: .new_rdv H:M d/m/Y\n \"Description of the event\""
+    "To add a new Rendezvous: .new_rdv H:M d/m/Y \"Description of the event\"\n"
     "To delete a Rendezvous: .del_rdv ID\n"
+	#"To modify a Rendezvous: .mod_rdv ID \n"
     "To check the list of Rendezvous: .check_rdv\n"
     "To see this list of commands: .help_rdv\n"
     "To see the different timezones of each member: .time\n")
@@ -270,3 +277,4 @@ async def help_rdv():
 
 bot.loop.create_task(check_event())
 bot.run(token)
+#await bot.change_presence(game=discord.Game(name='Nebula'))
